@@ -1,0 +1,88 @@
+name: DevSecOps CI - Build, Scan, and Registry Push
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch: # Allows manual trigger from the GitHub UI for testing
+
+env:
+  REGISTRY: ghcr.io
+  # Converts repository name to lowercase automatically for GHCR compatibility
+  IMAGE_NAME: ${{ github.repository }}/secure-app
+
+jobs:
+  build-scan-push:
+    runs-on: ubuntu-latest
+    
+    # Strictly scope permissions for zero-trust security
+    permissions:
+      contents: read
+      packages: write 
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Uses the automatic GitHub token; no manual secret configuration needed here
+      - name: Authenticate to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Generates tags using the exact Git commit SHA for strict provenance tracking
+      - name: Extract Metadata & Tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+
+      # Build but do NOT push yet. Load locally for vulnerability scanning
+      - name: Build Docker Image (Local Load)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true 
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Generate SBOM (Anchore Syft)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.meta.outputs.tags }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      # The Gating Mechanism: Pipeline dies here if a critical CVE is found
+      - name: Vulnerability Scan (Aqua Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'table'
+          exit-code: '1' # Forces failure
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL'
+
+      # Only executes if Trivy returns an exit code of 0 (no critical CVEs)
+      - name: Push Verified Image to GHCR
+        if: success() 
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # Save the SBOM to the GitHub UI for your academic artifact documentation
+      - name: Upload SBOM Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: secure-app-sbom
+          path: sbom.spdx.json
