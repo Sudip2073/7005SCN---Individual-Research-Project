@@ -17,6 +17,7 @@ jobs:
       contents: read      # checkout repo
       packages: write     # push to GHCR
       id-token: write     # REQUIRED: GitHub OIDC token for Cosign keyless signing
+      security-events: write
 
     outputs:
       image-digest: ${{ steps.push.outputs.digest }}
@@ -150,10 +151,11 @@ jobs:
 
       - name: Upload SARIF to GitHub Security Tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
           category: trivy-container-scan
+          retention-days: 90
 
       # ──────────────────────────────────────────────
       # STAGE 5 — Push verified image to GHCR
