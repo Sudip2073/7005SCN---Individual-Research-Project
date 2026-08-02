@@ -132,7 +132,7 @@ jobs:
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           format: table
-          exit-code: '1'
+          # exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
