@@ -152,10 +152,7 @@ jobs:
       - name: Upload SARIF to GitHub Security Tab
         if: always()
         uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: trivy-results.sarif
-          category: trivy-container-scan
-          retention-days: 90
+        
 
       # ──────────────────────────────────────────────
       # STAGE 5 — Push verified image to GHCR
@@ -316,6 +313,14 @@ jobs:
         with:
           name: slsa-provenance-${{ github.sha }}
           path: slsa-provenance.json
+          retention-days: 
+          
+      - name: Upload Trivy SARIF Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results-${{ github.sha }}
+          path: trivy-results.sarif
           retention-days: 90
 
       # ──────────────────────────────────────────────
