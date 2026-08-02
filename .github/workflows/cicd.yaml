@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
+      actions: read       # required by upload-sarif telemetry/workflow-run lookup
       contents: read      # checkout repo
       packages: write     # push to GHCR
       id-token: write     # REQUIRED: GitHub OIDC token for Cosign keyless signing
