@@ -58,6 +58,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           format: spdx-json
           output-file: sbom.spdx.json
+          upload-artifact: false
 
       # The Gating Mechanism: Pipeline dies here if a critical CVE is found
       - name: Vulnerability Scan (Aqua Trivy)
