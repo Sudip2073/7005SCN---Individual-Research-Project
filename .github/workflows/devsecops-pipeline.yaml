@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/secure-app
+  REGISTRY: ${{ vars.REGISTRY }}
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+  
 
 jobs:
   build-scan-sign-push:
@@ -67,18 +68,29 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Prepare container image name
+        id: image
+        shell: bash
+        run: |
+          REGISTRY="$(echo "${{ env.REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE_NAME="$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')"
+          echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
+          echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "full=${REGISTRY}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "Using image reference: ${REGISTRY}/${IMAGE_NAME}"
+
       - name: Authenticate to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ steps.image.outputs.registry }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Extract Metadata & Immutable SHA Tag
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.image.outputs.full }}
           tags: |
             type=sha,format=long
             type=raw,value=latest,enable={{is_default_branch}}
@@ -138,6 +150,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
+          cache-dir: .cache/trivy
 
       - name: Vulnerability Scan — SARIF (GitHub Security Tab)
         if: always()
@@ -149,6 +162,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
+          cache-dir: .cache/trivy
 
       - name: Upload SARIF to GitHub Security Tab
         if: always()
@@ -177,7 +191,8 @@ jobs:
       - name: Capture Immutable Image Reference
         id: image-ref
         run: |
-          IMAGE_REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}"
+          IMAGE_PATH=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_REF="${IMAGE_PATH}@${{ steps.push.outputs.digest }}"
           echo "ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           echo "=== Signing target ==="
           echo "${IMAGE_REF}"
@@ -232,59 +247,49 @@ jobs:
       # Formally satisfies SLSA Build L2 requirements.
       # ──────────────────────────────────────────────
 
-      - name: Generate & Attest SLSA v1.0 Provenance
+      - name: Generate & Attest SLSA Provenance
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
           DIGEST: ${{ steps.push.outputs.digest }}
         run: |
-          echo "=== SLSA v1.0 Provenance Attestation ==="
-
           cat > slsa-provenance.json << EOF
           {
-            "_type": "https://in-toto.io/Statement/v0.1",
-            "predicateType": "https://slsa.dev/provenance/v1",
-            "subject": [{
-              "name": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",
-              "digest": { "sha256": "${DIGEST#sha256:}" }
-            }],
-            "predicate": {
-              "buildDefinition": {
-                "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
-                "externalParameters": {
-                  "workflow": {
-                    "ref": "${{ github.ref }}",
-                    "repository": "${{ github.repository }}",
-                    "path": ".github/workflows/devsecops-pipeline.yml"
-                  }
-                },
-                "internalParameters": {
-                  "github": {
-                    "event_name": "${{ github.event_name }}",
-                    "run_id":     "${{ github.run_id }}",
-                    "run_attempt":"${{ github.run_attempt }}",
-                    "sha":        "${{ github.sha }}",
-                    "actor":      "${{ github.actor }}"
-                  }
-                }
+            "builder": {
+              "id": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            },
+            "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
+            "invocation": {
+              "configSource": {
+                "uri": "git+https://github.com/${{ github.repository }}",
+                "digest": { "sha1": "${{ github.sha }}" },
+                "entryPoint": ".github/workflows/devsecops-pipeline.yaml"
               },
-              "runDetails": {
-                "builder": {
-                  "id": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                },
-                "metadata": {
-                  "invocationId": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                }
+              "parameters": {
+                "event_name": "${{ github.event_name }}",
+                "ref": "${{ github.ref }}",
+                "run_id": "${{ github.run_id }}",
+                "run_attempt": "${{ github.run_attempt }}",
+                "actor": "${{ github.actor }}"
+              },
+              "environment": {}
+            },
+            "metadata": {
+              "buildInvocationID": "${{ github.run_id }}"
+            },
+            "materials": [
+              {
+                "uri": "git+https://github.com/${{ github.repository }}",
+                "digest": { "sha1": "${{ github.sha }}" }
               }
-            }
+            ]
           }
           EOF
 
           cosign attest \
             --yes \
             --predicate slsa-provenance.json \
-            --type slsaprovenance1 \
+            --type slsaprovenance \
             "${IMAGE_REF}"
-          echo "SLSA v1.0 provenance attestation pushed to GHCR"
 
       # ──────────────────────────────────────────────
       # STAGE 9 — Upload all artefacts (thesis appendix evidence)
