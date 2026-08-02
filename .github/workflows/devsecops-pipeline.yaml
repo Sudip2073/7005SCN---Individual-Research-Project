@@ -86,14 +86,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Extract Metadata & Immutable SHA Tag
+      - name: Extract Metadata & Latest Tag
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ steps.image.outputs.full }}
           tags: |
-            type=sha,format=long
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
 
       # ──────────────────────────────────────────────
       # STAGE 2 — Build image locally only (no push yet)
