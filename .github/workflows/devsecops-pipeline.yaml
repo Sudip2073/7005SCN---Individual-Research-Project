@@ -86,13 +86,14 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GHCR_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Extract Metadata & Latest Tag
+      - name: Extract Metadata & Immutable SHA Tag
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ steps.image.outputs.full }}
           tags: |
-            type=raw,value=latest
+            type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
 
       # ──────────────────────────────────────────────
       # STAGE 2 — Build image locally only (no push yet)
@@ -251,16 +252,14 @@ jobs:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
           DIGEST: ${{ steps.push.outputs.digest }}
         run: |
-          echo "=== SLSA v1.0 Provenance Attestation ==="
-
           cat > slsa-provenance.json << EOF
           {
-            "_type": "https://in-toto.io/Statement/v0.1",
-            "predicateType": "https://slsa.dev/provenance/v1",
+            "_type": "https://in-toto.io/Statement/v1",
             "subject": [{
               "name": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",
               "digest": { "sha256": "${DIGEST#sha256:}" }
             }],
+            "predicateType": "https://slsa.dev/provenance/v1",
             "predicate": {
               "buildDefinition": {
                 "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
@@ -268,18 +267,19 @@ jobs:
                   "workflow": {
                     "ref": "${{ github.ref }}",
                     "repository": "${{ github.repository }}",
-                    "path": ".github/workflows/devsecops-pipeline.yml"
+                    "path": ".github/workflows/devsecops-pipeline.yaml"
                   }
                 },
                 "internalParameters": {
                   "github": {
                     "event_name": "${{ github.event_name }}",
-                    "run_id":     "${{ github.run_id }}",
-                    "run_attempt":"${{ github.run_attempt }}",
-                    "sha":        "${{ github.sha }}",
-                    "actor":      "${{ github.actor }}"
+                    "run_id": "${{ github.run_id }}",
+                    "run_attempt": "${{ github.run_attempt }}",
+                    "sha": "${{ github.sha }}",
+                    "actor": "${{ github.actor }}"
                   }
-                }
+                },
+                "resolvedDependencies": []
               },
               "runDetails": {
                 "builder": {
@@ -296,9 +296,8 @@ jobs:
           cosign attest \
             --yes \
             --predicate slsa-provenance.json \
-            --type slsaprovenance1 \
+            --type slsaprovenance \
             "${IMAGE_REF}"
-          echo "SLSA v1.0 provenance attestation pushed to GHCR"
 
       # ──────────────────────────────────────────────
       # STAGE 9 — Upload all artefacts (thesis appendix evidence)
