@@ -109,7 +109,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
-          artifact-name: sbom-cyclonedx-${{ github.sha }}
+          # artifact-name: sbom-cyclonedx-${{ github.sha }}
 
       - name: Generate SBOM — SPDX JSON
         uses: anchore/sbom-action@v0
@@ -117,7 +117,7 @@ jobs:
           image: ${{ steps.meta.outputs.tags }}
           format: spdx-json
           output-file: sbom.spdx.json
-          artifact-name: sbom-spdx-${{ github.sha }}
+          # artifact-name: sbom-spdx-${{ github.sha }}
 
       # ──────────────────────────────────────────────
       # STAGE 4 — Vulnerability scan (policy gate)
