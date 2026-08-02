@@ -179,7 +179,8 @@ jobs:
       - name: Capture Immutable Image Reference
         id: image-ref
         run: |
-          IMAGE_REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}"
+          IMAGE_PATH=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_REF="${IMAGE_PATH}@${{ steps.push.outputs.digest }}"
           echo "ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           echo "=== Signing target ==="
           echo "${IMAGE_REF}"
