@@ -25,11 +25,10 @@ jobs:
     
     steps:
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0 # Fetch all history for provenance tracking
-      
-      
+
       - name: Verify Git Commit Signature
         # Verifies the HEAD commit is GPG or SSH signed.
         # Remove the `continue-on-error` line once all contributors have signing configured.
@@ -124,7 +123,7 @@ jobs:
           category: trivy-container-scan
 
       # Only executes if Trivy returns an exit code of 0 (no critical CVEs)
-       - name: Push Verified Image to GHCR
+      - name: Push Verified Image to GHCR
         id: push
         uses: docker/build-push-action@14487ce63c7a62a4a324b0b6a545221b4f3c0f60  # v6.16.0 pinned SHA
         with:
