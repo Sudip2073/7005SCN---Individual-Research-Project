@@ -327,7 +327,7 @@ jobs:
           cosign attest \
             --yes \
             --predicate slsa-provenance.json \
-            --type slsaprovenance \
+            --type slsaprovenance1 \
             "${IMAGE_REF}"
 
       # ──────────────────────────────────────────────
@@ -340,7 +340,7 @@ jobs:
 
       - name: Upload CycloneDX SBOM
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-cyclonedx-${{ github.sha }}
           path: sbom.cyclonedx.json
@@ -348,7 +348,7 @@ jobs:
 
       - name: Upload SPDX SBOM
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-spdx-${{ github.sha }}
           path: sbom.spdx.json
@@ -356,7 +356,7 @@ jobs:
 
       - name: Upload SLSA Provenance Document
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: slsa-provenance-${{ github.sha }}
           path: slsa-provenance.json
@@ -364,7 +364,7 @@ jobs:
 
       - name: Upload Trivy SARIF Report
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: trivy-results-${{ github.sha }}
           path: trivy-results.sarif
