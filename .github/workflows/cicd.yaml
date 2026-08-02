@@ -1,112 +1,145 @@
-name: DevSecOps CI - Build, Scan, and Registry Push
+name: DevSecOps CI — Build, Scan, Sign, Attest & Push
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: # Allows manual trigger from the GitHub UI for testing
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/secure-app
 
 jobs:
-  build-scan-push:
+  build-scan-sign-push:
     runs-on: ubuntu-latest
-    
-    # Strictly scope permissions for zero-trust security
+
     permissions:
-      contents: read
-      packages: write 
-      id-token: write # Required for GHCR authentication
-    
+      contents: read      # checkout repo
+      packages: write     # push to GHCR
+      id-token: write     # REQUIRED: GitHub OIDC token for Cosign keyless signing
+
     outputs:
       image-digest: ${{ steps.push.outputs.digest }}
       image-ref: ${{ steps.image-ref.outputs.ref }}
-    
+
     steps:
+
+      # ──────────────────────────────────────────────
+      # STAGE 0 — Verify signed git commit
+      # Checks that the HEAD commit carries a GPG or SSH signature.
+      # To enable locally: git config --global commit.gpgsign true
+      # Upload your public key to GitHub → Settings → SSH and GPG keys
+      # Then enable "Vigilant Mode" in GitHub → Settings → SSH and GPG keys
+      # ──────────────────────────────────────────────
+
       - name: Checkout Code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history for provenance tracking
+          fetch-depth: 0   # full history required for commit signature verification
 
       - name: Verify Git Commit Signature
-        # Verifies the HEAD commit is GPG or SSH signed.
-        # Remove the `continue-on-error` line once all contributors have signing configured.
+        # continue-on-error: remove this line once all contributors have signing configured
         continue-on-error: true
         run: |
           echo "=== Commit Provenance Check ==="
-          git log -1 --format="%H %GS %G?" HEAD
-          SIGNATURE_STATUS=$(git log -1 --format="%G?" HEAD)
-          if [ "$SIGNATURE_STATUS" = "G" ] || [ "$SIGNATURE_STATUS" = "E" ]; then
-            echo "PASS: Commit is signed and verified."
-          elif [ "$SIGNATURE_STATUS" = "U" ]; then
-            echo "WARN: Commit is signed but key is not in trusted keyring."
+          COMMIT_SHA=$(git log -1 --format="%H" HEAD)
+          SIGNER=$(git log -1 --format="%GS" HEAD)
+          STATUS=$(git log -1 --format="%G?" HEAD)
+          echo "Commit : ${COMMIT_SHA}"
+          echo "Signer : ${SIGNER:-none}"
+          echo "Status : ${STATUS}"
+          if [ "$STATUS" = "G" ]; then
+            echo "PASS: Commit signed with a valid, trusted key."
+          elif [ "$STATUS" = "E" ]; then
+            echo "PASS: Commit signed (key expired but signature is valid)."
+          elif [ "$STATUS" = "U" ]; then
+            echo "WARN: Commit is signed but key is not in the trusted keyring."
           else
-            echo "WARN: Commit is NOT signed. Enable GPG/SSH signing locally."
+            echo "WARN: Commit is NOT signed. Configure: git config --global commit.gpgsign true"
           fi
-      
+
+      # ──────────────────────────────────────────────
+      # STAGE 1 — Build toolchain
+      # ──────────────────────────────────────────────
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2  # v3.10.0 pinned SHA
+        uses: docker/setup-buildx-action@v3
 
       - name: Authenticate to GHCR
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  # v3.4.0 pinned SHA
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Generates tags using the exact Git commit SHA for strict provenance tracking
-      - name: Extract Metadata & Tags
+      - name: Extract Metadata & Immutable SHA Tag
         id: meta
-        uses: docker/metadata-action@902fa8ec7d6ecbea8d7f8d6898f07b6c0b3d8b79  # v5.7.0 pinned SHA
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=long
+            type=raw,value=latest,enable={{is_default_branch}}
 
-#----------------------------------------------
-      # Build but do NOT push yet. Load locally for vulnerability scanning
-      - name: Build Docker Image (Local Load)
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0b6a545221b4f3c0f60  # v6.16.0 pinned SHA
+      # ──────────────────────────────────────────────
+      # STAGE 2 — Build image locally only (no push yet)
+      # Scan BEFORE any push so a vulnerable image never reaches GHCR
+      # ──────────────────────────────────────────────
+
+      - name: Build Docker Image (Local — Pre-Scan)
+        uses: docker/build-push-action@v6
         with:
           context: .
-          load: true 
+          load: true
           push: false
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Generate SBOM — CycloneDX 1.4 JSON (Kyverno attestation target)
-        uses: anchore/sbom-action@e11e49b0d3bec8abe4c4d0e8af2c546cc8560b28  # v0.20.0 pinned SHA
+      # ──────────────────────────────────────────────
+      # STAGE 3 — Dual-format SBOM generation
+      # CycloneDX → Kyverno attestation policy target
+      # SPDX      → Academic documentation + UK SSCoP / NIST SSDF regulatory alignment
+      # ──────────────────────────────────────────────
+
+      - name: Generate SBOM — CycloneDX 1.4 JSON
+        uses: anchore/sbom-action@v0.24.0
         with:
           image: ${{ steps.meta.outputs.tags }}
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
-          artifact-name: sbom-cyclonedx
+          artifact-name: sbom-cyclonedx-${{ github.sha }}
 
-      - name: Generate SBOM — SPDX JSON (regulatory / academic documentation)
-        uses: anchore/sbom-action@e11e49b0d3bec8abe4c4d0e8af2c546cc8560b28  # v0.20.0 pinned SHA
+      - name: Generate SBOM — SPDX JSON
+        uses: anchore/sbom-action@v0.24.0
         with:
           image: ${{ steps.meta.outputs.tags }}
           format: spdx-json
           output-file: sbom.spdx.json
-          artifact-name: sbom-spdx
+          artifact-name: sbom-spdx-${{ github.sha }}
 
-      # The Gating Mechanism: Pipeline dies here if a critical CVE is found
-      - name: Vulnerability Scan — Table Output (Actions Log)
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8  # v0.30.0 pinned SHA
+      # ──────────────────────────────────────────────
+      # STAGE 4 — Vulnerability scan (policy gate)
+      # Gate: pipeline FAILS on HIGH or CRITICAL CVEs
+      # Table → human readable in Actions log
+      # SARIF  → machine-readable, uploaded to GitHub Security tab
+      #          (citable evidence for thesis methodology chapter)
+      # ──────────────────────────────────────────────
+
+      - name: Vulnerability Scan — Table (Actions Log)
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           format: table
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
-          severity: 'HIGH,CRITICAL'   # UPDATED: gates on both HIGH and CRITICAL
- 
-      - name: Vulnerability Scan — SARIF Output (GitHub Security Tab)
-        if: always()    # run even on failure so SARIF is always uploaded for evidence
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8  # v0.30.0 pinned SHA
+          severity: 'HIGH,CRITICAL'
+
+      - name: Vulnerability Scan — SARIF (GitHub Security Tab)
+        if: always()
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           image-ref: ${{ steps.meta.outputs.tags }}
           format: sarif
@@ -114,97 +147,96 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
- 
+
       - name: Upload SARIF to GitHub Security Tab
         if: always()
-        uses: github/codeql-action/upload-sarif@45775bd8235c68ba998cffa5171334d58593da47  # v3.28.15 pinned SHA
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
           category: trivy-container-scan
 
-      # Only executes if Trivy returns an exit code of 0 (no critical CVEs)
+      # ──────────────────────────────────────────────
+      # STAGE 5 — Push verified image to GHCR
+      # Only reached if Trivy returns exit code 0 (no HIGH/CRITICAL CVEs).
+      # Push MUST happen before Cosign — Cosign signs the remote OCI digest,
+      # which does not exist until after the image is pushed.
+      # ──────────────────────────────────────────────
+
       - name: Push Verified Image to GHCR
         id: push
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0b6a545221b4f3c0f60  # v6.16.0 pinned SHA
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          # outputs the immutable sha256 digest — used by all subsequent Cosign steps
-          # format: ghcr.io/org/repo/image@sha256:<digest>
- 
+
       - name: Capture Immutable Image Reference
         id: image-ref
         run: |
-          # Construct the digest-pinned reference — never use a mutable tag for signing
           IMAGE_REF="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}"
           echo "ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
-          echo "=== Image reference for signing ==="
+          echo "=== Signing target ==="
           echo "${IMAGE_REF}"
- 
+
       # ──────────────────────────────────────────────
       # STAGE 6 — Cosign keyless signing (SLSA L2 provenance)
-      # Uses GitHub Actions OIDC token as identity (no private keys stored anywhere).
-      # Flow: GitHub OIDC → Fulcio CA issues short-lived cert → signs image digest
-      #       → Rekor appends a permanent, tamper-evident transparency log entry
-      # The .sig OCI artifact is pushed to GHCR alongside the image automatically.
+      # Identity chain: GitHub Actions OIDC token
+      #   → Fulcio CA issues short-lived signing certificate
+      #   → Image digest signed
+      #   → Rekor appends permanent transparency log entry
+      # The .sig OCI artifact is pushed to GHCR alongside the image.
+      # No private keys stored anywhere.
       # ──────────────────────────────────────────────
- 
+
       - name: Install Cosign
-        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a  # v3.8.1 pinned SHA
- 
-      - name: Sign Image Digest — Keyless via GitHub OIDC / Sigstore
+        uses: sigstore/cosign-installer@v3.8.1
+
+      - name: Sign Image Digest (Keyless — GitHub OIDC / Sigstore)
         env:
-          # Digest-pinned reference — immutable, what Kyverno policy verifies
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
         run: |
           echo "=== Cosign Keyless Signing ==="
-          echo "Signing: ${IMAGE_REF}"
+          echo "Target : ${IMAGE_REF}"
           cosign sign --yes "${IMAGE_REF}"
-          echo "=== Signature pushed to GHCR as .sig OCI artifact ==="
-          echo "=== Rekor transparency log entry created ==="
- 
+          echo "Signature pushed to GHCR as .sig OCI artifact"
+          echo "Rekor transparency log entry created"
+
       # ──────────────────────────────────────────────
-      # STAGE 7 — Cosign in-toto attestation
-      # Attaches the CycloneDX SBOM as a cryptographically signed in-toto attestation.
-      # This creates a .att OCI artifact in GHCR that Kyverno's attestation policy verifies.
-      # The predicate-type cyclonedx tells Kyverno how to interpret the payload.
+      # STAGE 7 — in-toto SBOM attestation
+      # Attaches the CycloneDX SBOM as a signed in-toto attestation.
+      # Creates a .att OCI artifact in GHCR.
+      # This is what Kyverno's attestation ClusterPolicy verifies at admission.
       # ──────────────────────────────────────────────
- 
+
       - name: Attest SBOM — CycloneDX in-toto Attestation
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
         run: |
           echo "=== Cosign SBOM Attestation ==="
-          echo "Attesting: ${IMAGE_REF}"
-          echo "Predicate: sbom.cyclonedx.json (CycloneDX 1.4)"
+          echo "Target    : ${IMAGE_REF}"
+          echo "Predicate : sbom.cyclonedx.json (CycloneDX 1.4)"
           cosign attest \
             --yes \
             --predicate sbom.cyclonedx.json \
             --type cyclonedx \
             "${IMAGE_REF}"
-          echo "=== SBOM attestation pushed to GHCR as .att OCI artifact ==="
- 
+          echo "SBOM attestation pushed to GHCR as .att OCI artifact"
+
       # ──────────────────────────────────────────────
-      # STAGE 8 — SLSA L2 provenance attestation
-      # Generates a signed SLSA provenance document describing:
-      #   - which GitHub Actions workflow built this image
-      #   - the exact commit SHA
-      #   - the builder identity (GitHub Actions)
-      # This is the document that formally satisfies SLSA Build L2 requirements.
+      # STAGE 8 — SLSA v1.0 provenance attestation
+      # Documents: which workflow built this, which commit, which runner.
+      # Formally satisfies SLSA Build L2 requirements.
       # ──────────────────────────────────────────────
- 
-      - name: Generate SLSA L2 Provenance Attestation
+
+      - name: Generate & Attest SLSA v1.0 Provenance
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
           DIGEST: ${{ steps.push.outputs.digest }}
         run: |
-          echo "=== SLSA Provenance Attestation ==="
-          # Generate a SLSA v1.0 provenance predicate locally
-          # In production, use slsa-github-generator for full SLSA L3.
-          # For SLSA L2 (this thesis), we attest builder metadata via cosign.
+          echo "=== SLSA v1.0 Provenance Attestation ==="
+
           cat > slsa-provenance.json << EOF
           {
             "_type": "https://in-toto.io/Statement/v0.1",
@@ -226,10 +258,10 @@ jobs:
                 "internalParameters": {
                   "github": {
                     "event_name": "${{ github.event_name }}",
-                    "run_id": "${{ github.run_id }}",
-                    "run_attempt": "${{ github.run_attempt }}",
-                    "sha": "${{ github.sha }}",
-                    "actor": "${{ github.actor }}"
+                    "run_id":     "${{ github.run_id }}",
+                    "run_attempt":"${{ github.run_attempt }}",
+                    "sha":        "${{ github.sha }}",
+                    "actor":      "${{ github.actor }}"
                   }
                 }
               },
@@ -244,84 +276,95 @@ jobs:
             }
           }
           EOF
- 
+
           cosign attest \
             --yes \
             --predicate slsa-provenance.json \
             --type slsaprovenance1 \
             "${IMAGE_REF}"
-          echo "=== SLSA L2 provenance attestation pushed to GHCR ==="
- 
+          echo "SLSA v1.0 provenance attestation pushed to GHCR"
+
       # ──────────────────────────────────────────────
-      # STAGE 9 — Upload all artefacts for academic documentation
-      # These files form your thesis appendix evidence:
-      #   - sbom.cyclonedx.json  → Kyverno attestation + vulnerability analysis
-      #   - sbom.spdx.json       → Regulatory alignment (UK SSCoP / NIST SSDF)
-      #   - trivy-results.sarif  → CVE scan evidence (also in GitHub Security tab)
-      #   - slsa-provenance.json → SLSA L2 provenance document
+      # STAGE 9 — Upload all artefacts (thesis appendix evidence)
+      #   sbom.cyclonedx.json  — Kyverno attestation + CVE analysis
+      #   sbom.spdx.json       — Regulatory alignment (UK SSCoP / NIST SSDF)
+      #   trivy-results.sarif  — CVE scan evidence
+      #   slsa-provenance.json — SLSA L2 provenance document
       # ──────────────────────────────────────────────
- 
+
       - name: Upload CycloneDX SBOM
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2 pinned SHA
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-cyclonedx-${{ github.sha }}
           path: sbom.cyclonedx.json
           retention-days: 90
- 
+
       - name: Upload SPDX SBOM
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2 pinned SHA
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-spdx-${{ github.sha }}
           path: sbom.spdx.json
           retention-days: 90
- 
+
       - name: Upload SLSA Provenance Document
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2 pinned SHA
+        uses: actions/upload-artifact@v4
         with:
           name: slsa-provenance-${{ github.sha }}
           path: slsa-provenance.json
           retention-days: 90
- 
+
       # ──────────────────────────────────────────────
-      # STAGE 10 — Pipeline summary
-      # Writes a structured summary to the GitHub Actions job summary page.
-      # Copy the image reference into your thesis appendix.
+      # STAGE 10 — Job summary
+      # Copy the signed image reference into your thesis appendix.
+      # Use the cosign verify commands below to reproduce results.
       # ──────────────────────────────────────────────
- 
+
       - name: Write Pipeline Summary
         if: success()
         run: |
           cat >> $GITHUB_STEP_SUMMARY << EOF
           ## DevSecOps Pipeline — Run Summary
- 
+
           | Item | Value |
           |------|-------|
           | Commit SHA | \`${{ github.sha }}\` |
           | Image digest | \`${{ steps.push.outputs.digest }}\` |
           | Signed image ref | \`${{ steps.image-ref.outputs.ref }}\` |
-          | Trivy gate | HIGH + CRITICAL (zero found) |
-          | SBOM formats | CycloneDX 1.4 JSON + SPDX JSON |
-          | Cosign signing | Keyless (GitHub OIDC → Fulcio → Rekor) |
-          | Attestation | in-toto CycloneDX SBOM + SLSA v1.0 provenance |
-          | GHCR artifacts | image (\`\`) + signature (\`.sig\`) + attestation (\`.att\`) |
+          | Trivy gate | HIGH + CRITICAL — zero found |
+          | SBOM formats | CycloneDX 1.4 JSON + SPDX 2.3 JSON |
+          | Signing method | Keyless (GitHub OIDC → Fulcio → Rekor) |
+          | Attestations | in-toto CycloneDX SBOM + SLSA v1.0 provenance |
+          | GHCR artifacts | image + .sig + .att |
           | Run URL | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |
- 
-          ### Verify this image locally
+
+          ### Reproduce verification locally
+
           \`\`\`bash
-          # Verify signature
-          cosign verify \\
-            --certificate-identity-regexp="https://github.com/${{ github.repository }}/*" \\
-            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \\
-            ${{ steps.image-ref.outputs.ref }}
- 
-          # Verify SBOM attestation
-          cosign verify-attestation \\
-            --type cyclonedx \\
-            --certificate-identity-regexp="https://github.com/${{ github.repository }}/*" \\
-            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \\
-            ${{ steps.image-ref.outputs.ref }}
+          export IMAGE="${{ steps.image-ref.outputs.ref }}"
+          export IDENTITY_REGEXP="https://github.com/${{ github.repository }}/*"
+          export OIDC_ISSUER="https://token.actions.githubusercontent.com"
+
+          # 1. Verify image signature
+          cosign verify \
+            --certificate-identity-regexp="${IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer="${OIDC_ISSUER}" \
+            "${IMAGE}"
+
+          # 2. Verify CycloneDX SBOM attestation
+          cosign verify-attestation \
+            --type cyclonedx \
+            --certificate-identity-regexp="${IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer="${OIDC_ISSUER}" \
+            "${IMAGE}"
+
+          # 3. Verify SLSA provenance attestation
+          cosign verify-attestation \
+            --type slsaprovenance1 \
+            --certificate-identity-regexp="${IDENTITY_REGEXP}" \
+            --certificate-oidc-issuer="${OIDC_ISSUER}" \
+            "${IMAGE}"
           \`\`\`
           EOF
