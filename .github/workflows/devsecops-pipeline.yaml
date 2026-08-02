@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ${{ vars.REGISTRY }}
   IMAGE_NAME: ${{ vars.IMAGE_NAME }}
-  
+  IMAGE_REPOSITORY: ${{ vars.REGISTRY }}/${{ vars.IMAGE_NAME }}
 
 jobs:
   build-scan-sign-push:
@@ -65,6 +65,15 @@ jobs:
       # STAGE 1 — Build toolchain
       # ──────────────────────────────────────────────
 
+      - name: Normalize image repository
+        shell: bash
+        run: |
+          IMAGE_NAME="${{ env.IMAGE_NAME }}"
+          IMAGE_REPOSITORY=$(echo "${{ env.REGISTRY }}/${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_REPOSITORY="${IMAGE_REPOSITORY%:}"
+          echo "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}" >> "$GITHUB_ENV"
+          echo "Normalized image repository: ${IMAGE_REPOSITORY}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -79,7 +88,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE_REPOSITORY }}
           tags: |
             type=sha,format=long
             type=raw,value=latest,enable={{is_default_branch}}
@@ -180,7 +189,7 @@ jobs:
       - name: Capture Immutable Image Reference
         id: image-ref
         run: |
-          IMAGE_PATH=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_PATH=$(echo "${{ env.IMAGE_REPOSITORY }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_REF="${IMAGE_PATH}@${{ steps.push.outputs.digest }}"
           echo "ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
           echo "=== Signing target ==="
@@ -248,7 +257,7 @@ jobs:
             "_type": "https://in-toto.io/Statement/v0.1",
             "predicateType": "https://slsa.dev/provenance/v1",
             "subject": [{
-              "name": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",
+              "name": "${{ env.IMAGE_REPOSITORY }}",
               "digest": { "sha256": "${DIGEST#sha256:}" }
             }],
             "predicate": {
