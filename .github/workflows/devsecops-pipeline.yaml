@@ -287,6 +287,8 @@ jobs:
       - name: Generate & Attest SLSA Provenance
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+
         run: |
           set -euo pipefail
           cat > slsa-provenance.json << EOF
