@@ -2,31 +2,39 @@ name: DevSecOps CI — Build, Scan, Sign, Attest & Push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
+
+concurrency:
+  group: devsecops-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ${{ vars.REGISTRY }}
   IMAGE_NAME: ${{ vars.IMAGE_NAME }}
-  
 
 jobs:
   build-scan-sign-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 90
 
     permissions:
-      actions: read       # required by upload-sarif telemetry/workflow-run lookup
-      contents: read      # checkout repo
-      packages: write     # push to GHCR
-      id-token: write     # REQUIRED: GitHub OIDC token for Cosign keyless signing
+      actions: read
+      attestations: write
+      contents: read
+      packages: write
+      id-token: write
       security-events: write
 
     outputs:
       image-digest: ${{ steps.push.outputs.digest }}
       image-ref: ${{ steps.image-ref.outputs.ref }}
 
-    steps:
+    defaults:
+      run:
+        shell: bash
 
+    steps:
       # ──────────────────────────────────────────────
       # STAGE 0 — Verify signed git commit
       # Checks that the HEAD commit carries a GPG or SSH signature.
@@ -36,12 +44,28 @@ jobs:
       # ──────────────────────────────────────────────
 
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
-          fetch-depth: 0   # full history required for commit signature verification
+          fetch-depth: 0
+
+      - name: Validate required configuration
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+        run: |
+          set -euo pipefail
+          if [ -z "${REGISTRY}" ]; then
+            echo "::error::Repository variable REGISTRY is not set"
+            exit 1
+          fi
+          if [ -z "${IMAGE_NAME}" ]; then
+            echo "::error::Repository variable IMAGE_NAME is not set"
+            exit 1
+          fi
+          echo "Registry: ${REGISTRY}"
+          echo "Image: ${IMAGE_NAME}"
 
       - name: Verify Git Commit Signature
-        # continue-on-error: remove this line once all contributors have signing configured
         continue-on-error: true
         run: |
           echo "=== Commit Provenance Check ==="
@@ -66,21 +90,34 @@ jobs:
       # ──────────────────────────────────────────────
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Prepare container image name
         id: image
-        shell: bash
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
         run: |
-          REGISTRY="$(echo "${{ env.REGISTRY }}" | tr '[:upper:]' '[:lower:]')"
-          IMAGE_NAME="$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')"
+          set -euo pipefail
+          REGISTRY="$(echo "${REGISTRY}" | tr '[:upper:]' '[:lower:]')"
+          IMAGE_NAME="$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
           echo "registry=${REGISTRY}" >> "$GITHUB_OUTPUT"
           echo "name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "full=${REGISTRY}/${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "Using image reference: ${REGISTRY}/${IMAGE_NAME}"
 
+      - name: Prepare immutable image tag
+        id: image-tag
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="sha-${GITHUB_SHA}"
+          IMAGE_REF="${{ steps.image.outputs.full }}:${IMAGE_TAG}"
+          echo "tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
+          echo "Using image reference: ${IMAGE_REF}"
+
       - name: Authenticate to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ steps.image.outputs.registry }}
           username: ${{ github.repository_owner }}
@@ -88,7 +125,7 @@ jobs:
 
       - name: Extract Metadata & Immutable SHA Tag
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ steps.image.outputs.full }}
           tags: |
@@ -101,7 +138,7 @@ jobs:
       # ──────────────────────────────────────────────
 
       - name: Build Docker Image (Local — Pre-Scan)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
@@ -120,18 +157,16 @@ jobs:
       - name: Generate SBOM — CycloneDX 1.4 JSON
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ steps.image.outputs.full }}:sha-${{ github.sha }}
+          image: ${{ steps.image-tag.outputs.ref }}
           format: cyclonedx-json
           output-file: sbom.cyclonedx.json
-          # artifact-name: sbom-cyclonedx-${{ github.sha }}
 
       - name: Generate SBOM — SPDX JSON
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ steps.image.outputs.full }}:sha-${{ github.sha }}
+          image: ${{ steps.image-tag.outputs.ref }}
           format: spdx-json
           output-file: sbom.spdx.json
-          # artifact-name: sbom-spdx-${{ github.sha }}
 
       # ──────────────────────────────────────────────
       # STAGE 4 — Vulnerability scan (policy gate)
@@ -144,7 +179,7 @@ jobs:
       - name: Vulnerability Scan — Table (Actions Log)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ steps.image.outputs.full }}:sha-${{ github.sha }}
+          image-ref: ${{ steps.image-tag.outputs.ref }}
           format: table
           # exit-code: '1'
           ignore-unfixed: true
@@ -156,7 +191,7 @@ jobs:
         if: always()
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ steps.image.outputs.full }}:sha-${{ github.sha }}
+          image-ref: ${{ steps.image-tag.outputs.ref }}
           format: sarif
           output: trivy-results.sarif
           ignore-unfixed: true
@@ -169,7 +204,6 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
-          
 
       # ──────────────────────────────────────────────
       # STAGE 5 — Push verified image to GHCR
@@ -180,7 +214,7 @@ jobs:
 
       - name: Push Verified Image to GHCR
         id: push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
@@ -191,6 +225,7 @@ jobs:
       - name: Capture Immutable Image Reference
         id: image-ref
         run: |
+          set -euo pipefail
           IMAGE_PATH=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           IMAGE_REF="${IMAGE_PATH}@${{ steps.push.outputs.digest }}"
           echo "ref=${IMAGE_REF}" >> "$GITHUB_OUTPUT"
@@ -214,6 +249,7 @@ jobs:
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
         run: |
+          set -euo pipefail
           echo "=== Cosign Keyless Signing ==="
           echo "Target : ${IMAGE_REF}"
           cosign sign --yes "${IMAGE_REF}"
@@ -231,6 +267,7 @@ jobs:
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
         run: |
+          set -euo pipefail
           echo "=== Cosign SBOM Attestation ==="
           echo "Target    : ${IMAGE_REF}"
           echo "Predicate : sbom.cyclonedx.json (CycloneDX 1.4)"
@@ -250,46 +287,62 @@ jobs:
       - name: Generate & Attest SLSA Provenance
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
-          DIGEST: ${{ steps.push.outputs.digest }}
         run: |
-          cat > slsa-provenance.json << EOF
+          set -euo pipefail
+ 
+          echo "=== SLSA v1.0 Provenance Attestation ==="
+          echo "Target : ${IMAGE_REF}"
+ 
+          cat > slsa-provenance.json << PREDICATE
           {
-            "builder": {
-              "id": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            },
-            "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}",
-                "digest": { "sha1": "${{ github.sha }}" },
-                "entryPoint": ".github/workflows/devsecops-pipeline.yaml"
+            "buildDefinition": {
+              "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
+              "externalParameters": {
+                "workflow": {
+                  "ref": "${{ github.ref }}",
+                  "repository": "https://github.com/${{ github.repository }}",
+                  "path": ".github/workflows/devsecops-pipeline.yaml"
+                }
               },
-              "parameters": {
-                "event_name": "${{ github.event_name }}",
-                "ref": "${{ github.ref }}",
-                "run_id": "${{ github.run_id }}",
-                "run_attempt": "${{ github.run_attempt }}",
-                "actor": "${{ github.actor }}"
+              "internalParameters": {
+                "github": {
+                  "event_name":  "${{ github.event_name }}",
+                  "run_id":      "${{ github.run_id }}",
+                  "run_attempt": "${{ github.run_attempt }}",
+                  "sha":         "${{ github.sha }}",
+                  "actor":       "${{ github.actor }}"
+                }
               },
-              "environment": {}
+              "resolvedDependencies": [
+                {
+                  "uri": "git+https://github.com/${{ github.repository }}@${{ github.ref }}",
+                  "digest": {
+                    "gitCommit": "${{ github.sha }}"
+                  }
+                }
+              ]
             },
-            "metadata": {
-              "buildInvocationID": "${{ github.run_id }}"
-            },
-            "materials": [
-              {
-                "uri": "git+https://github.com/${{ github.repository }}",
-                "digest": { "sha1": "${{ github.sha }}" }
+            "runDetails": {
+              "builder": {
+                "id": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              },
+              "metadata": {
+                "invocationId": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "startedOn": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
               }
-            ]
+            }
           }
-          EOF
-
+          PREDICATE
+ 
+          echo "Predicate written — attesting..."
+ 
           cosign attest \
             --yes \
             --predicate slsa-provenance.json \
-            --type slsaprovenance \
+            --type slsaprovenance1 \
             "${IMAGE_REF}"
+ 
+          echo "SLSA v1.0 provenance attestation pushed to GHCR as .att OCI artifact"
 
       # ──────────────────────────────────────────────
       # STAGE 9 — Upload all artefacts (thesis appendix evidence)
@@ -301,7 +354,7 @@ jobs:
 
       - name: Upload CycloneDX SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-cyclonedx-${{ github.sha }}
           path: sbom.cyclonedx.json
@@ -309,7 +362,7 @@ jobs:
 
       - name: Upload SPDX SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-spdx-${{ github.sha }}
           path: sbom.spdx.json
@@ -317,15 +370,15 @@ jobs:
 
       - name: Upload SLSA Provenance Document
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: slsa-provenance-${{ github.sha }}
           path: slsa-provenance.json
           retention-days: 90
-          
+
       - name: Upload Trivy SARIF Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: trivy-results-${{ github.sha }}
           path: trivy-results.sarif
