@@ -18,7 +18,7 @@ jobs:
       contents: read      # checkout repo
       packages: write     # push to GHCR
       id-token: write     # REQUIRED: GitHub OIDC token for Cosign keyless signing
-      security-events: read
+      security-events: write
 
     outputs:
       image-digest: ${{ steps.push.outputs.digest }}
@@ -138,6 +138,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
+          cache-dir: .cache/trivy
 
       - name: Vulnerability Scan — SARIF (GitHub Security Tab)
         if: always()
@@ -149,6 +150,7 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'HIGH,CRITICAL'
+          cache-dir: .cache/trivy
 
       - name: Upload SARIF to GitHub Security Tab
         if: always()
