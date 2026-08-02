@@ -284,51 +284,65 @@ jobs:
       # Formally satisfies SLSA Build L2 requirements.
       # ──────────────────────────────────────────────
 
-      - name: Generate & Attest SLSA v1.0 Provenance
+      - name: Generate & Attest SLSA Provenance
         env:
           IMAGE_REF: ${{ steps.image-ref.outputs.ref }}
-          DIGEST: ${{ steps.push.outputs.digest }}
         run: |
           set -euo pipefail
-
-          cat > slsa-provenance.json << 'EOF'
+ 
+          echo "=== SLSA v1.0 Provenance Attestation ==="
+          echo "Target : ${IMAGE_REF}"
+ 
+          cat > slsa-provenance.json << PREDICATE
           {
-            "builder": {
-              "id": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            },
-            "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
-            "invocation": {
-              "configSource": {
-                "uri": "git+https://github.com/${{ github.repository }}",
-                "digest": { "sha1": "${{ github.sha }}" },
-                "entryPoint": ".github/workflows/devsecops-pipeline.yaml"
+            "buildDefinition": {
+              "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
+              "externalParameters": {
+                "workflow": {
+                  "ref": "${{ github.ref }}",
+                  "repository": "https://github.com/${{ github.repository }}",
+                  "path": ".github/workflows/devsecops-pipeline.yaml"
+                }
               },
-              "parameters": {
-                "event_name": "${{ github.event_name }}",
-                "ref": "${{ github.ref }}",
-                "run_id": "${{ github.run_id }}",
-                "run_attempt": "${{ github.run_attempt }}",
-                "actor": "${{ github.actor }}"
+              "internalParameters": {
+                "github": {
+                  "event_name":  "${{ github.event_name }}",
+                  "run_id":      "${{ github.run_id }}",
+                  "run_attempt": "${{ github.run_attempt }}",
+                  "sha":         "${{ github.sha }}",
+                  "actor":       "${{ github.actor }}"
+                }
               },
-              "environment": {}
+              "resolvedDependencies": [
+                {
+                  "uri": "git+https://github.com/${{ github.repository }}@${{ github.ref }}",
+                  "digest": {
+                    "gitCommit": "${{ github.sha }}"
+                  }
+                }
+              ]
             },
-            "metadata": {
-              "buildInvocationID": "${{ github.run_id }}"
-            },
-            "materials": [
-              {
-                "uri": "git+https://github.com/${{ github.repository }}",
-                "digest": { "sha1": "${{ github.sha }}" }
+            "runDetails": {
+              "builder": {
+                "id": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              },
+              "metadata": {
+                "invocationId": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "startedOn": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
               }
-            ]
+            }
           }
-          EOF
-
+          PREDICATE
+ 
+          echo "Predicate written — attesting..."
+ 
           cosign attest \
             --yes \
             --predicate slsa-provenance.json \
             --type slsaprovenance1 \
             "${IMAGE_REF}"
+ 
+          echo "SLSA v1.0 provenance attestation pushed to GHCR as .att OCI artifact"
 
       # ──────────────────────────────────────────────
       # STAGE 9 — Upload all artefacts (thesis appendix evidence)
