@@ -1,0 +1,92 @@
+# ============================================================
+# Deployment —  FastAPI microservice
+# ============================================================
+# This is what kubectl apply sends to K3s.
+# Kyverno intercepts this and checks both policies before
+# the pod is admitted to the cluster.
+#
+# IMPORTANT: imagePullSecrets references the ghcr-pull-secret
+# you created. Without it, K3s cannot pull from your private GHCR.
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secure-app
+  namespace: default
+  labels:
+    app: secure-app
+    version: "1.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secure-app
+  template:
+    metadata:
+      labels:
+        app: secure-app
+    spec:
+      # GHCR pull credentials
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+
+      containers:
+        - name: secure-app
+          # IMPORTANT: Use the digest-pinned reference from your pipeline summary
+          # NOT :latest — Kyverno verifies against the digest
+          # Replace sha256:... with your actual digest from the pipeline run
+          image: ghcr.io/sudip2073/7005scn/fastapi:latest
+
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+
+          # Liveness and readiness probes
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          # Resource limits — important for K3s on local hardware
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+
+          # Security context — non-root enforcement
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: secure-app-service
+  namespace: default
+spec:
+  selector:
+    app: secure-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

@@ -1,0 +1,47 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-ghcr-image-signature
+  annotations:
+    policies.kyverno.io/title: Verify Cosign Keyless Signature
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      This policy enforces that all images from our GHCR repository
+      are cryptographically signed by our specific GitHub Actions workflow.
+spec:
+  validationFailureAction: Enforce
+  background: false
+  webhookTimeoutSeconds: 30
+  rules:
+    - name: check-image-signature
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+            # Apply to all namespaces EXCEPT our baseline control group and kube-system
+            namespaces:
+              - default
+              - secure-prod
+      exclude:
+        any:
+        - resources:
+            namespaces:
+              - baseline
+              - kube-system
+              - kyverno
+      verifyImages:
+      - imageReferences:
+        - "ghcr.io/Sudip2073/*"
+        verifyDigest: true
+        required: true
+        mutateDigest: true
+        attestors:
+        - count: 1
+          entries:
+          - keyless:
+              # Matches the Subject and Issuer extracted in your Python script!
+              subject: "https://github.com/Sudip2073/7005SCN---Individual-Research-Project/.github/workflows/*"
+              issuer: "https://token.actions.githubusercontent.com"
+              rekor:
+                url: "https://rekor.sigstore.dev"
