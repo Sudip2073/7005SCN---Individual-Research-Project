@@ -1,7 +1,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: verify-ghcr-sbom-attestation
+  name: verify-sbom-attestation
 spec:
   validationFailureAction: Enforce
   background: false
@@ -22,8 +22,10 @@ spec:
       verifyImages:
       - imageReferences:
         - "ghcr.io/Sudip2073/*"
+        - "*"
         verifyDigest: true
         required: true
+        mutateDigest: false
         attestations:
         - predicateType: https://cyclonedx.org/bom
           attestors:

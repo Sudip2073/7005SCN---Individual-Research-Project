@@ -33,10 +33,20 @@ spec:
 
       containers:
         - name: secure-app
-          # IMPORTANT: Use the digest-pinned reference from your pipeline summary
-          # NOT :latest — Kyverno verifies against the digest
-          # Replace sha256:... with your actual digest from the pipeline run
-          image: ghcr.io/sudip2073/7005scn/fastapi:latest
+          # Keep your actual digest here!
+          image: ghcr.io/sudip2073/7005scn/fastapi:latest 
+
+          # 1. FIX THE PYTHON PATHS
+          # This forces Python to look exactly where the builder stage copied the files
+          env:
+            - name: PYTHONUSERBASE
+              value: "/home/appuser/.local"
+            - name: PYTHONPATH
+              value: "/home/appuser/.local/lib/python3.11/site-packages"
+
+          # 2. OVERRIDE THE STARTUP COMMAND
+          # Using "python -m uvicorn" is much safer than calling the "uvicorn" binary directly
+          command: ["python", "-m", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
 
           ports:
             - containerPort: 8000
@@ -45,14 +55,14 @@ spec:
           # Liveness and readiness probes
           livenessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: 8000
             initialDelaySeconds: 10
             periodSeconds: 15
 
           readinessProbe:
             httpGet:
-              path: /health
+              path: /healthz
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 10

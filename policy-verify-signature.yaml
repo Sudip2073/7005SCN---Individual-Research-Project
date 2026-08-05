@@ -1,7 +1,7 @@
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
-  name: verify-ghcr-image-signature
+  name: verify-image-signature
   annotations:
     policies.kyverno.io/title: Verify Cosign Keyless Signature
     policies.kyverno.io/subject: Pod
@@ -33,9 +33,10 @@ spec:
       verifyImages:
       - imageReferences:
         - "ghcr.io/Sudip2073/*"
+        - "*"
         verifyDigest: true
         required: true
-        mutateDigest: true
+        mutateDigest: false
         attestors:
         - count: 1
           entries:
