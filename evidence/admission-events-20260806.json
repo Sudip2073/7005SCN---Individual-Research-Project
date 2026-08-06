@@ -1,0 +1,966 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "count": 5,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:31:08Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{no-sbom-test}",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default",
+                "resourceVersion": "21427",
+                "uid": "69e3833a-ece4-4e1c-8b93-b2e91d646271"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:34:00Z",
+            "message": "Failed to pull image \"ghcr.io/sigstore/cosign:latest\": failed to pull and unpack image \"ghcr.io/sigstore/cosign:latest\": failed to resolve reference \"ghcr.io/sigstore/cosign:latest\": failed to authorize: failed to fetch anonymous token: unexpected status from GET request to https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: 403 Forbidden",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:31:08Z",
+                "name": "no-sbom-test.18c90967c23fd526",
+                "namespace": "default",
+                "resourceVersion": "21907",
+                "uid": "648df58d-1e51-4a55-9d1e-affa0f8c4893"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 5,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:31:08Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{no-sbom-test}",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default",
+                "resourceVersion": "21427",
+                "uid": "69e3833a-ece4-4e1c-8b93-b2e91d646271"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:34:00Z",
+            "message": "Error: ErrImagePull",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:31:08Z",
+                "name": "no-sbom-test.18c90967c242e64e",
+                "namespace": "default",
+                "resourceVersion": "21908",
+                "uid": "c928c5f8-00fc-46c5-95c5-e8950f369eee"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 20,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:31:08Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{no-sbom-test}",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default",
+                "resourceVersion": "21427",
+                "uid": "69e3833a-ece4-4e1c-8b93-b2e91d646271"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:36:14Z",
+            "message": "Error: ImagePullBackOff",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:31:08Z",
+                "name": "no-sbom-test.18c90967d8aaa2bd",
+                "namespace": "default",
+                "resourceVersion": "22269",
+                "uid": "a29839c5-ad8a-462a-a071-c79ce20fc5ad"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 5,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:46:54Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{no-sbom-test}",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default",
+                "resourceVersion": "24069",
+                "uid": "a129f535-11ae-4732-be54-b1bf1f40bcb5"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:49:52Z",
+            "message": "Failed to pull image \"ghcr.io/sigstore/cosign:latest\": failed to pull and unpack image \"ghcr.io/sigstore/cosign:latest\": failed to resolve reference \"ghcr.io/sigstore/cosign:latest\": failed to authorize: failed to fetch anonymous token: unexpected status from GET request to https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: 403 Forbidden",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:46:54Z",
+                "name": "no-sbom-test.18c90a43eaccc1b3",
+                "namespace": "default",
+                "resourceVersion": "24605",
+                "uid": "61af5ce6-7d83-459f-abc6-7d329df9b583"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 5,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:46:54Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{no-sbom-test}",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default",
+                "resourceVersion": "24069",
+                "uid": "a129f535-11ae-4732-be54-b1bf1f40bcb5"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:49:52Z",
+            "message": "Error: ErrImagePull",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:46:54Z",
+                "name": "no-sbom-test.18c90a43eacf7af7",
+                "namespace": "default",
+                "resourceVersion": "24606",
+                "uid": "ea283aec-6d75-44ca-aefa-92ea012fe6a3"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 44,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:46:54Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{no-sbom-test}",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default",
+                "resourceVersion": "24069",
+                "uid": "a129f535-11ae-4732-be54-b1bf1f40bcb5"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:57:05Z",
+            "message": "Error: ImagePullBackOff",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:46:54Z",
+                "name": "no-sbom-test.18c90a43fbc593ea",
+                "namespace": "default",
+                "resourceVersion": "25746",
+                "uid": "34927afc-7431-4436-9bad-41e9a6bd9c9d"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 11,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:25:40Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-6b98d899f4-wds8d",
+                "namespace": "default",
+                "resourceVersion": "20314",
+                "uid": "5abf6ab0-1a00-4254-acb5-a4b05ffcfa87"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:27:02Z",
+            "message": "Readiness probe failed: HTTP probe failed with statuscode: 404",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:25:40Z",
+                "name": "secure-app-6b98d899f4-wds8d.18c9091b6566c208",
+                "namespace": "default",
+                "resourceVersion": "20676",
+                "uid": "2508635b-fc47-4033-ba30-c6724f7aa126"
+            },
+            "reason": "Unhealthy",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 18,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:16:20Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-74667bb6d6-nffmr",
+                "namespace": "default",
+                "resourceVersion": "18811",
+                "uid": "78df249d-7101-4cd7-add7-0e292f7e0371"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:25:03Z",
+            "message": "Back-off restarting failed container secure-app in pod secure-app-74667bb6d6-nffmr_default(78df249d-7101-4cd7-add7-0e292f7e0371)",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:16:20Z",
+                "name": "secure-app-74667bb6d6-nffmr.18c90898fa88414b",
+                "namespace": "default",
+                "resourceVersion": "20229",
+                "uid": "929f2000-6b66-41c0-b8ed-b191657e059d"
+            },
+            "reason": "BackOff",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 38,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T21:44:54Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-74667bb6d6-t8n79",
+                "namespace": "default",
+                "resourceVersion": "13952",
+                "uid": "0bd35503-a80a-424c-aa5e-d72ea204bf8f"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:14:56Z",
+            "message": "Back-off restarting failed container secure-app in pod secure-app-74667bb6d6-t8n79_default(0bd35503-a80a-424c-aa5e-d72ea204bf8f)",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T21:44:54Z",
+                "name": "secure-app-74667bb6d6-t8n79.18c906e1d14ccbe0",
+                "namespace": "default",
+                "resourceVersion": "18600",
+                "uid": "90f057a7-abbf-484d-a759-dbf95513a4d6"
+            },
+            "reason": "BackOff",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:24:55Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-794dd5c67d-l6xtg",
+                "namespace": "default",
+                "resourceVersion": "20164",
+                "uid": "9f2a412c-efd5-420a-9d4d-e2ad36776c40"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:24:55Z",
+            "message": "Readiness probe failed: Get \"http://10.42.0.19:8000/health\": dial tcp 10.42.0.19:8000: connect: connection refused",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:24:55Z",
+                "name": "secure-app-794dd5c67d-l6xtg.18c90910e0bdeb53",
+                "namespace": "default",
+                "resourceVersion": "20206",
+                "uid": "e1b6cfe6-0343-420e-a09d-160bdeff4a62"
+            },
+            "reason": "Unhealthy",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 8,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:24:58Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-794dd5c67d-l6xtg",
+                "namespace": "default",
+                "resourceVersion": "20164",
+                "uid": "9f2a412c-efd5-420a-9d4d-e2ad36776c40"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:26:43Z",
+            "message": "Liveness probe failed: HTTP probe failed with statuscode: 404",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:24:58Z",
+                "name": "secure-app-794dd5c67d-l6xtg.18c90911a0487b5c",
+                "namespace": "default",
+                "resourceVersion": "20557",
+                "uid": "08c00099-891d-4e57-9599-890b76d934cc"
+            },
+            "reason": "Unhealthy",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 12,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:25:05Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-794dd5c67d-l6xtg",
+                "namespace": "default",
+                "resourceVersion": "20164",
+                "uid": "9f2a412c-efd5-420a-9d4d-e2ad36776c40"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:26:44Z",
+            "message": "Readiness probe failed: HTTP probe failed with statuscode: 404",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:25:05Z",
+                "name": "secure-app-794dd5c67d-l6xtg.18c9091334c9c23a",
+                "namespace": "default",
+                "resourceVersion": "20576",
+                "uid": "e953daf9-0e0a-4fef-bf78-83ee926ca694"
+            },
+            "reason": "Unhealthy",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 4,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:27:19Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-7f85644448-5x872",
+                "namespace": "default",
+                "resourceVersion": "20722",
+                "uid": "f8eacf4d-c9d9-4705-97c3-ad825a863beb"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:27:54Z",
+            "message": "Back-off restarting failed container secure-app in pod secure-app-7f85644448-5x872_default(f8eacf4d-c9d9-4705-97c3-ad825a863beb)",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:27:19Z",
+                "name": "secure-app-7f85644448-5x872.18c909328d9664f6",
+                "namespace": "default",
+                "resourceVersion": "20881",
+                "uid": "6e508fbf-d0de-4d8d-8d14-3bbcf568d021"
+            },
+            "reason": "BackOff",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 1,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:26:49Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{secure-app}",
+                "kind": "Pod",
+                "name": "secure-app-7f85644448-9qbz4",
+                "namespace": "default",
+                "resourceVersion": "20585",
+                "uid": "23df6cd1-af0f-4589-820b-7e8c6100e722"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:26:49Z",
+            "message": "Back-off restarting failed container secure-app in pod secure-app-7f85644448-9qbz4_default(23df6cd1-af0f-4589-820b-7e8c6100e722)",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:26:49Z",
+                "name": "secure-app-7f85644448-9qbz4.18c9092b892f2f0a",
+                "namespace": "default",
+                "resourceVersion": "20622",
+                "uid": "00bbae6e-2097-44c7-a235-4348312db16e"
+            },
+            "reason": "BackOff",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 5,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:46:20Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{unsigned-test}",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default",
+                "resourceVersion": "23964",
+                "uid": "7982d058-8bb7-465b-85b9-80cda6f81cc4"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:49:28Z",
+            "message": "Failed to pull image \"ghcr.io/sudip2073/7005scn/api:1.0.0\": failed to pull and unpack image \"ghcr.io/sudip2073/7005scn/api:1.0.0\": failed to resolve reference \"ghcr.io/sudip2073/7005scn/api:1.0.0\": failed to authorize: failed to fetch anonymous token: unexpected status from GET request to https://ghcr.io/token?scope=repository%3Asudip2073%2F7005scn%2Fapi%3Apull\u0026service=ghcr.io: 401 Unauthorized",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:46:20Z",
+                "name": "unsigned-test.18c90a3c07e98b89",
+                "namespace": "default",
+                "resourceVersion": "24535",
+                "uid": "342f7dcd-2b70-4574-a748-f50449ddbb03"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 5,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:46:20Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{unsigned-test}",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default",
+                "resourceVersion": "23964",
+                "uid": "7982d058-8bb7-465b-85b9-80cda6f81cc4"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:49:28Z",
+            "message": "Error: ErrImagePull",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:46:20Z",
+                "name": "unsigned-test.18c90a3c07ec81bd",
+                "namespace": "default",
+                "resourceVersion": "24536",
+                "uid": "8b2de2b2-db17-453b-9558-1be1360e29a9"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "apiVersion": "v1",
+            "count": 41,
+            "eventTime": null,
+            "firstTimestamp": "2026-08-05T22:46:20Z",
+            "involvedObject": {
+                "apiVersion": "v1",
+                "fieldPath": "spec.containers{unsigned-test}",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default",
+                "resourceVersion": "23964",
+                "uid": "7982d058-8bb7-465b-85b9-80cda6f81cc4"
+            },
+            "kind": "Event",
+            "lastTimestamp": "2026-08-05T22:56:27Z",
+            "message": "Error: ImagePullBackOff",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:46:20Z",
+                "name": "unsigned-test.18c90a3c0a260c7b",
+                "namespace": "default",
+                "resourceVersion": "25649",
+                "uid": "aea7bdd4-33c9-4c69-97ec-01bff8d78575"
+            },
+            "reason": "Failed",
+            "reportingComponent": "kubelet",
+            "reportingInstance": "desktop-lfd1i1m",
+            "source": {
+                "component": "kubelet",
+                "host": "desktop-lfd1i1m"
+            },
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:10.957554Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-ghcr-image-signature",
+                "uid": "6cfebcfc-4a33-4539-9b8e-709c799cdc48"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-image-signature] fail (blocked); failed to verify image ghcr.io/sigstore/cosign:latest: .attestors[0].entries[0].keyless: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:10Z",
+                "name": "verify-ghcr-image-signature.18c90ab79cf2ad0d",
+                "namespace": "default",
+                "resourceVersion": "25453",
+                "uid": "0cb79436-5091-4787-85b6-a33488e38667"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:33.368857Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-ghcr-image-signature",
+                "uid": "6cfebcfc-4a33-4539-9b8e-709c799cdc48"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/unsigned-test: [check-image-signature] fail (blocked); failed to verify image docker.io/nginx:latest: .attestors[0].entries[0].keyless: no signatures found",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:33Z",
+                "name": "verify-ghcr-image-signature.18c90abcd4c40355",
+                "namespace": "default",
+                "resourceVersion": "25515",
+                "uid": "272d1814-e4c7-4c93-8a90-dcdc88394fdc"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:58:38.224761Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-ghcr-image-signature",
+                "uid": "6cfebcfc-4a33-4539-9b8e-709c799cdc48"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-image-signature] fail (blocked); failed to verify image ghcr.io/sigstore/cosign:latest: .attestors[0].entries[0].keyless: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:58:38Z",
+                "name": "verify-ghcr-image-signature.18c90ae7df094704",
+                "namespace": "default",
+                "resourceVersion": "25987",
+                "uid": "a0265d1a-5714-4c90-b5f4-b14faba09545"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:10.957571Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-ghcr-sbom-attestation",
+                "uid": "d442e24b-297d-49ef-9b12-15f84ddb95e2"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-sbom-attestation] fail (blocked); image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:10Z",
+                "name": "verify-ghcr-sbom-attestation.18c90ab79cf2f105",
+                "namespace": "default",
+                "resourceVersion": "25455",
+                "uid": "52d85504-c709-4138-8bfd-d89f411eba5d"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:33.368800Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-ghcr-sbom-attestation",
+                "uid": "d442e24b-297d-49ef-9b12-15f84ddb95e2"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/unsigned-test: [check-sbom-attestation] fail (blocked); image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: no matching attestations: ",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:33Z",
+                "name": "verify-ghcr-sbom-attestation.18c90abcd4c3295d",
+                "namespace": "default",
+                "resourceVersion": "25512",
+                "uid": "75363d6a-d16a-4621-9571-90d2c3d19588"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:58:38.224811Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-ghcr-sbom-attestation",
+                "uid": "d442e24b-297d-49ef-9b12-15f84ddb95e2"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-sbom-attestation] fail (blocked); image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:58:38Z",
+                "name": "verify-ghcr-sbom-attestation.18c90ae7df0a06d0",
+                "namespace": "default",
+                "resourceVersion": "25986",
+                "uid": "7f5db651-9e71-4fb4-9033-230118542c83"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:10.956127Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-image-signature",
+                "uid": "deaa7102-173b-4075-923e-1a1e81ae12e8"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-image-signature] fail (blocked); failed to verify image ghcr.io/sigstore/cosign:latest: .attestors[0].entries[0].keyless: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:10Z",
+                "name": "verify-image-signature.18c90ab79ce11971",
+                "namespace": "default",
+                "resourceVersion": "25452",
+                "uid": "787af287-7d85-4b58-bcb3-a83a1fb6e363"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:33.368844Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-image-signature",
+                "uid": "deaa7102-173b-4075-923e-1a1e81ae12e8"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/unsigned-test: [check-image-signature] fail (blocked); failed to verify image docker.io/nginx:latest: .attestors[0].entries[0].keyless: no signatures found",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:33Z",
+                "name": "verify-image-signature.18c90abcd4c3d2e5",
+                "namespace": "default",
+                "resourceVersion": "25513",
+                "uid": "93ea308d-ed1c-4a89-8d18-9caeedf74824"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:58:38.224841Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-image-signature",
+                "uid": "deaa7102-173b-4075-923e-1a1e81ae12e8"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-image-signature] fail (blocked); failed to verify image ghcr.io/sigstore/cosign:latest: .attestors[0].entries[0].keyless: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:58:38Z",
+                "name": "verify-image-signature.18c90ae7df0a7cc8",
+                "namespace": "default",
+                "resourceVersion": "25985",
+                "uid": "2884eae4-7294-413d-a358-e48c4d4bb6f9"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:10.957478Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-sbom-attestation",
+                "uid": "d6d91b49-3e09-478c-91f1-9a141d193001"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-sbom-attestation] fail (blocked); image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:10Z",
+                "name": "verify-sbom-attestation.18c90ab79cf18a6d",
+                "namespace": "default",
+                "resourceVersion": "25454",
+                "uid": "777f8628-2c6b-4767-becd-78ada8866598"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:55:33.368852Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-sbom-attestation",
+                "uid": "d6d91b49-3e09-478c-91f1-9a141d193001"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/unsigned-test: [check-sbom-attestation] fail (blocked); image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: no matching attestations: ",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:55:33Z",
+                "name": "verify-sbom-attestation.18c90abcd4c3f289",
+                "namespace": "default",
+                "resourceVersion": "25514",
+                "uid": "9aa6a4c5-8cce-4438-91a4-c210cffa032a"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "unsigned-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        },
+        {
+            "action": "Resource Blocked",
+            "apiVersion": "v1",
+            "eventTime": "2026-08-05T22:58:38.224848Z",
+            "firstTimestamp": null,
+            "involvedObject": {
+                "apiVersion": "kyverno.io/v1",
+                "kind": "ClusterPolicy",
+                "name": "verify-sbom-attestation",
+                "uid": "d6d91b49-3e09-478c-91f1-9a141d193001"
+            },
+            "kind": "Event",
+            "lastTimestamp": null,
+            "message": "Pod default/no-sbom-test: [check-sbom-attestation] fail (blocked); image attestations verification failed, verifiedCount: 0, requiredCount: 1, error: GET https://ghcr.io/token?scope=repository%3Asigstore%2Fcosign%3Apull\u0026service=ghcr.io: DENIED: requested access to the resource is denied",
+            "metadata": {
+                "creationTimestamp": "2026-08-05T22:58:38Z",
+                "name": "verify-sbom-attestation.18c90ae7df0a97bc",
+                "namespace": "default",
+                "resourceVersion": "25988",
+                "uid": "f29e51f9-da58-4001-a6b5-368c10b2f973"
+            },
+            "reason": "PolicyViolation",
+            "related": {
+                "apiVersion": "v1",
+                "kind": "Pod",
+                "name": "no-sbom-test",
+                "namespace": "default"
+            },
+            "reportingComponent": "kyverno-admission",
+            "reportingInstance": "kyverno-admission-kyverno-admission-controller-f849f45fd-2fzqt",
+            "source": {},
+            "type": "Warning"
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

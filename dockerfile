@@ -16,12 +16,14 @@ FROM python:3.11-slim AS runner
 WORKDIR /app
 
 # Create a non-privileged system user
-RUN groupadd -g 10001 appuser && \
+RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+    groupadd -g 10001 appuser && \
     useradd -u 10001 -g appuser -s /sbin/nologin -c "Docker image user" appuser
 
 # Copy installed dependencies from builder stage
 COPY --from=builder /root/.local /home/appuser/.local
 COPY src/ /app/
+RUN chown -R 10001:10001 /home/appuser /app
 
 ENV PATH=/home/appuser/.local/bin:$PATH
 ENV APP_ENV=production
