@@ -1,62 +1,74 @@
 #!/bin/bash
+set -euo pipefail
 
 # ==============================================================================
 # 7005SCN Individual Research Project - RQ3 Latency Data Collection
 # This script measures the operational overhead of Shift-Left security controls.
 # ==============================================================================
 
-ITERATIONS=3
-CSV_FILE="evidence/RQ3/pipeline_latency_data_$(date +%Y%m%d).csv"
+ITERATIONS=50
+CSV_FILE="evidence/RQ3/granular_latency_data_$(date +%Y%m%d%H%M%S).csv"
 
 # Ensure the evidence directory exists
 mkdir -p evidence/RQ3
 
-# Initialize the CSV file with headers
-echo "Iteration,Model,Latency_Seconds" > "$CSV_FILE"
+# Initialize the CSV file with our expanded headers
+echo "Timestamp,Iteration,Pipeline_Type,Build_Time_Sec,SBOM_Time_Sec,Scan_Time_Sec,Total_Time_Sec" > "$CSV_FILE"
 
 echo "=================================================="
 echo " Starting Baseline Metrics (Build Only)"
 echo "=================================================="
 for i in $(seq 1 $ITERATIONS); do
-  # Record start time
-  START_TIME=$(date +%s%N)
+  CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
   
-  # Execution: Traditional Perimeter Baseline (Build Only)
-  docker build -t benchmark-app:baseline$i . 
+  # Measure Build Time
+  T0=$(date +%s.%N)
+  DOCKER_BUILDKIT=0 docker build -t benchmark-app:baseline . > /dev/null 2>&1
+  T1=$(date +%s.%N)
   
-  # Record end time and calculate duration
-  END_TIME=$(date +%s%N)
-  DURATION=$(awk "BEGIN {printf \"%.3f\", ($END_TIME - $START_TIME) / 1000000000}")
+  # Calculate Durations
+  BUILD_TIME=$(echo "$T1 - $T0" | bc | awk '{printf "%.3f", $0}')
   
-  # Log to CSV and console
-  echo "$i,Baseline,$DURATION" >> "$CSV_FILE"
-  echo "Baseline Run $i: $DURATION seconds"
+  # Baseline has no Syft or Trivy
+  SBOM_TIME="0.000"
+  SCAN_TIME="0.000"
+  TOTAL_TIME=$BUILD_TIME
+  
+  # Log to CSV
+  echo "$CURRENT_TIME,$i,Baseline,$BUILD_TIME,$SBOM_TIME,$SCAN_TIME,$TOTAL_TIME" >> "$CSV_FILE"
+  echo "Baseline Run $i: Total $TOTAL_TIME sec"
 done
 
 echo ""
 echo "=================================================="
-echo " Starting Secure DevSecOps Metrics (Build + SBOM + Scan)"
+echo " Starting Secure Metrics (Build + Syft + Trivy)"
 echo "=================================================="
 for i in $(seq 1 $ITERATIONS); do
-  # Record start time
-  START_TIME=$(date +%s%N)
+  CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
   
-  # Execution: Shift-Left Enforcement (Build -> Attest -> Scan)
-  docker build -t benchmark-app:secure$i . &> /dev/null &
-  wait
-  syft benchmark-app:secure$i -o cyclonedx-json=sbom$i.json &> /dev/null &
-  wait
-  trivy sbom sbom$i.json &> /dev/null &
-  wait
+  # 1. Measure Build Time
+  T0=$(date +%s.%N)
+  DOCKER_BUILDKIT=0 docker build -t benchmark-app:secure . > /dev/null 2>&1
   
-  # Record end time and calculate duration
-  END_TIME=$(date +%s%N)
-  DURATION=$(awk "BEGIN {printf \"%.3f\", ($END_TIME - $START_TIME) / 1000000000}")
+  # 2. Measure Syft (SBOM) Time
+  T1=$(date +%s.%N)
+  syft benchmark-app:secure -o cyclonedx-json=sbom.json > /dev/null 2>&1
   
-  # Log to CSV and console
-  echo "$i,Secure,$DURATION" >> "$CSV_FILE"
-  echo "Secure Run $i: $DURATION seconds"
+  # 3. Measure Trivy (Scan) Time
+  T2=$(date +%s.%N)
+  trivy sbom sbom.json > /dev/null 2>&1
+  T3=$(date +%s.%N)
+  
+  # Calculate Exact Durations
+  BUILD_TIME=$(echo "$T1 - $T0" | bc | awk '{printf "%.3f", $0}')
+  SBOM_TIME=$(echo "$T2 - $T1" | bc | awk '{printf "%.3f", $0}')
+  SCAN_TIME=$(echo "$T3 - $T2" | bc | awk '{printf "%.3f", $0}')
+  TOTAL_TIME=$(echo "$T3 - $T0" | bc | awk '{printf "%.3f", $0}')
+  
+  # Log to CSV
+  echo "$CURRENT_TIME,$i,Secure,$BUILD_TIME,$SBOM_TIME,$SCAN_TIME,$TOTAL_TIME" >> "$CSV_FILE"
+  echo "Secure Run $i: Build: ${BUILD_TIME}s | SBOM: ${SBOM_TIME}s | Scan: ${SCAN_TIME}s | Total: ${TOTAL_TIME}s"
 done
 
 echo ""
-echo "✅ Benchmarking complete! Empirical data saved to $CSV_FILE"
+echo "✅ Granular benchmarking complete! Empirical data saved to $CSV_FILE"
